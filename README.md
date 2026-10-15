@@ -1,7 +1,5 @@
 # Eventra
 Java-based intelligent event management system with attendance analytics, personalized recommendations, and networking.
-# Eventra 🎟️
-### Intelligent Event Management & Personalized Event Discovery
 
 **Eventra** is a Java-based event management system designed to simplify event discovery, registration, and attendance management. The platform aims to make organizing and participating in events more seamless through centralized event information, efficient booking management, and intelligent, personalized experiences.
 

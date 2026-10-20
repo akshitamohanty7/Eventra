@@ -25,6 +25,12 @@ public class CheckInDAOImpl extends AbstractDAO implements ICheckInDAO {
             "WHERE r.event_id = ?";
     private static final String SQL_CONFIRMED_COUNT =
             "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'CONFIRMED'";
+    private static final String SQL_WAITLIST_UNASSIGNED =
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND seat_number = 0";
+    private static final String SQL_WAITLIST_PROMOTED =
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'CONFIRMED' AND seat_number > 0";
+    private static final String SQL_CANCELLED_COUNT =
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'CANCELLED'";
 
     @Override
     public CheckIn checkIn(int registrationId, String method) throws SQLException {
@@ -86,6 +92,29 @@ public class CheckInDAOImpl extends AbstractDAO implements ICheckInDAO {
     public int getConfirmedRegistrationCount(int eventId) throws SQLException {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_CONFIRMED_COUNT)) {
+            ps.setInt(1, eventId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    @Override
+    public int getWaitlistCount(int eventId, String statusFilter) throws SQLException {
+        String sql = (statusFilter == null) ? SQL_WAITLIST_UNASSIGNED : SQL_WAITLIST_PROMOTED;
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, eventId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    @Override
+    public int getCancelledRegistrationCount(int eventId) throws SQLException {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_CANCELLED_COUNT)) {
             ps.setInt(1, eventId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getInt(1) : 0;

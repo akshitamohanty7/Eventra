@@ -100,29 +100,10 @@ public class AttendanceAnalyticsServiceImpl implements IAttendanceAnalyticsServi
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private int getWaitlistCount(int eventId, String statusFilter) throws SQLException {
-        // statusFilter = null → count all originally waitlisted (current WAITLIST)
-        // statusFilter = "CONFIRMED" → count promoted (seat_number > 0, originally WAITLIST)
-        // Approximation: seat_number = 0 means still on waitlist
-        String sql = statusFilter == null
-                ? "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND seat_number = 0"
-                : "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'CONFIRMED' AND seat_number > 0";
-        try (java.sql.Connection conn = new CheckInDAOImpl().getConnection();
-             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, eventId);
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        }
+        return checkInDAO.getWaitlistCount(eventId, statusFilter);
     }
 
     private int getCancelledCount(int eventId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'CANCELLED'";
-        try (java.sql.Connection conn = new CheckInDAOImpl().getConnection();
-             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, eventId);
-            try (java.sql.ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        }
+        return checkInDAO.getCancelledRegistrationCount(eventId);
     }
 }

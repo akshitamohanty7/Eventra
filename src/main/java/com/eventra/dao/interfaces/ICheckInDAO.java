@@ -48,4 +48,23 @@ public interface ICheckInDAO {
      * @throws SQLException on database error
      */
     int getConfirmedRegistrationCount(int eventId) throws SQLException;
+
+    /**
+     * Counts registrations by event ID and seat criteria for waitlist analytics.
+     *
+     * @param eventId      Event ID
+     * @param statusFilter "CONFIRMED" for promoted, null for currently waiting (seat_number = 0)
+     * @return count of matching registrations
+     * @throws SQLException on database error
+     */
+    int getWaitlistCount(int eventId, String statusFilter) throws SQLException;
+
+    /**
+     * Counts cancelled registrations for an event.
+     *
+     * @param eventId Event ID
+     * @return count of cancelled registrations
+     * @throws SQLException on database error
+     */
+    int getCancelledRegistrationCount(int eventId) throws SQLException;
 }

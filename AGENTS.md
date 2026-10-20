@@ -1,3 +1,4 @@
+
 # 🤖 AGENTS.md — Eventra Project AI Guardrails
 > **This file is the law.** Every AI agent working on this project MUST read this file in full before taking any action.  
 > Violating any rule here constitutes a failed task, regardless of whether the code "works."

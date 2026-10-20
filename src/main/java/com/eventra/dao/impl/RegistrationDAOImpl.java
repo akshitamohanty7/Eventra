@@ -65,6 +65,8 @@ public class RegistrationDAOImpl extends AbstractDAO implements IRegistrationDAO
     private static final String SQL_FIND_REG_BY_ID_PLAIN =
             "SELECT id, user_id, event_id, booking_ref, seat_number, status, registered_at " +
             "FROM registrations WHERE id = ?";
+    private static final String SQL_COUNT_WAITLIST =
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'WAITLIST'";
 
     // ── register() ───────────────────────────────────────────────────────────
 
@@ -87,6 +89,11 @@ public class RegistrationDAOImpl extends AbstractDAO implements IRegistrationDAO
                     throw new SQLException("Event not found: " + eventId);
                 }
 
+                // Check if event is no longer active
+                if (event.getStatus() == EventStatus.CANCELLED || event.getStatus() == EventStatus.COMPLETED) {
+                    throw new EventFullException(eventId, "Event is " + event.getStatus().name().toLowerCase() + " and not accepting registrations.");
+                }
+
                 // 3. Determine status
                 RegistrationStatus regStatus;
                 int seatNumber;
@@ -94,6 +101,12 @@ public class RegistrationDAOImpl extends AbstractDAO implements IRegistrationDAO
                     regStatus = RegistrationStatus.CONFIRMED;
                     seatNumber = getNextSeatNumber(eventId, conn);
                 } else {
+                    // Check if waitlist is at max capacity (max 20% of event capacity, min 5)
+                    int waitlistCount = getWaitlistCount(eventId, conn);
+                    int maxWaitlist = Math.max(5, (int) Math.ceil(event.getCapacity() * 0.20));
+                    if (waitlistCount >= maxWaitlist) {
+                        throw new EventFullException(eventId, "Event " + eventId + " has reached maximum capacity and the waitlist is full.");
+                    }
                     // Waitlisted — seat number 0 means no physical seat yet
                     regStatus = RegistrationStatus.WAITLIST;
                     seatNumber = 0;
@@ -376,5 +389,14 @@ public class RegistrationDAOImpl extends AbstractDAO implements IRegistrationDAO
         r.setStatus(RegistrationStatus.valueOf(rs.getString("status")));
         r.setRegisteredAt(rs.getTimestamp("registered_at"));
         return r;
+    }
+
+    private int getWaitlistCount(int eventId, Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(SQL_COUNT_WAITLIST)) {
+            ps.setInt(1, eventId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
     }
 }
